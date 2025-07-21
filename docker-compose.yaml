@@ -1,0 +1,6 @@
+services:
+  data_acquisition:
+    build:
+      context: .
+    image: all4dich/pytorch-cuda-example:dev
+    platform: linux/amd64
