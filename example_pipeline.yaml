@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: example-pipeline-
-  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.22, pipelines.kubeflow.org/pipeline_compilation_time: '2025-07-18T08:59:41.649148',
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.22, pipelines.kubeflow.org/pipeline_compilation_time: '2025-07-21T13:31:51.304085',
     pipelines.kubeflow.org/pipeline_spec: '{"description": "An example pipeline that
       checks CUDA availability.", "name": "example-pipeline"}'}
   labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.22}
@@ -12,7 +12,19 @@ spec:
   - name: example-pipeline
     dag:
       tasks:
-      - {name: ubuntu-operator, template: ubuntu-operator}
+      - {name: shell-operator, template: shell-operator}
+      - name: ubuntu-operator
+        template: ubuntu-operator
+        dependencies: [shell-operator]
+  - name: shell-operator
+    container:
+      command: [bash, -c, echo 'Hello from the shell operator!']
+      image: all4dich/pytorch-cuda-example:dev
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.22
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
   - name: ubuntu-operator
     container: {image: 'all4dich/pytorch-cuda-example:dev'}
     metadata:

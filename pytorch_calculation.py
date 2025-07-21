@@ -3,7 +3,7 @@ import time
 
 torch.set_default_device('cuda')  # Ensure calculations are done on CPU
 # Set the duration for the calculation (in seconds)
-duration = 5 * 60  # 5 minutes
+duration = 1 * 60  # 1 minutes
 
 # Get the start time
 start_time = time.time()
