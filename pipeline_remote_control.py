@@ -27,15 +27,15 @@ def check_by_existing_token():
         print(f"Failed to list pipelines: {e}")
         print("Please ensure your KUBERNETES_SERVICE_ACCOUNT_TOKEN is valid and has the necessary permissions.")
 
-def get_kubeflow_session_cookie():
+def get_kubeflow_session_cookie(target_host, target_username, target_password):
     session = requests.Session()
-    response = session.get(HOST)
+    response = session.get(target_host)
 
     headers = {
         #"Content-Type": "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    user_data = {"login": USERNAME, "password": PASSWORD}
+    user_data = {"login": target_username, "password": target_password}
     response = session.post(response.url, data=user_data, verify=False)
     if response.status_code == 200:
         print("🔐 Successfully authenticated to Kubeflow.")
@@ -45,16 +45,21 @@ def get_kubeflow_session_cookie():
         print(response.status_code)
         exit(1)
 
-def check_by_session_call(host, username, password, namespace):
+def check_by_session_call(target_host, target_username, target_password, target_namespace):
     print("Attempting to authenticate with Kubernetes session and list pipelines...")
+    my_cookie =get_kubeflow_session_cookie(target_host=target_host, target_username=target_username,
+                                target_password=target_password)
+    print(my_cookie)
     client = kfp.Client(
-        host=f"{host}/pipeline",
-        namespace=namespace,
-        cookies=f"authservice_session={get_kubeflow_session_cookie()}"
+        host=f"{target_host}/pipeline",
+        namespace=target_namespace,
+        cookies=f"authservice_session={my_cookie}",
     )
     r = client.list_pipelines()
     print(r)
 
 if __name__ == '__main__':
     #check_by_existing_token()
-    check_by_session_call(host=HOST, username=USERNAME, password=PASSWORD, namespace="space-yjwon")
+    #check_by_session_call(HOST, USERNAME, PASSWORD, "space-yjwon")
+    check_by_session_call("https://kubeflow.sunjoo.org", "user@example.com", "12341234", "kubeflow-user-example-com")
+    check_by_session_call(HOST, USERNAME, PASSWORD, "space-yjwon")
