@@ -27,11 +27,25 @@ def hello_world(name: str) -> str:
     return "message"
 
 @component
-def print_address(name: str, input_message: str):
+def print_address(name: str, input_message: str) -> str:
     import os
     print("320 , ", name)
     os.system("uname -a")
     print(input_message)
+    return "Done"
+
+@component
+def ending_message():
+    print("Done.....")
+
+@component(
+    base_image="python:3.13-slim",
+)
+def print_ubuntu_info():
+    import os
+    os.system("which vim")
+    os.system("which git")
+    os.system("uname -a")
 
 @dsl.pipeline(
     name='example-pipeline',
@@ -41,7 +55,11 @@ def example_pipeline():
     # This is a placeholder for a pipeline step.
     # You can add your own components here.
     a = hello_world(name = "Sunjoo")
-    print_address(name = "resdfsdf", input_message=a.output)
+    b = print_address(name = "resdfsdf", input_message=a.output)
+    c = ending_message().after(b)
+    d = ending_message().after(a)
+    print_ubuntu_info().after(c)
+    print_ubuntu_info().after(d)
 
 @dsl.component
 def square(x: float) -> float:
