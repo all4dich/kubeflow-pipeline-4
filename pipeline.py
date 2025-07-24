@@ -1,8 +1,10 @@
 import kfp
+from humanfriendly.terminal import message
 from kfp import dsl
 from kfp.dsl import component
 import requests
 from datetime import datetime
+import logging
 
 def shell_operator():
     return dsl.ContainerSpec(
@@ -17,12 +19,19 @@ def ubuntu_operator():
     )
 
 @component
-def hello_world(name: str):
-    print("Hello, ", name)
+def hello_world(name: str) -> str:
+    import os
+    message = ("Hello, ", name)
+    print(message)
+    os.system("uname -a")
+    return "message"
 
 @component
-def print_address(name: str):
+def print_address(name: str, input_message: str):
+    import os
     print("320 , ", name)
+    os.system("uname -a")
+    print(input_message)
 
 @dsl.pipeline(
     name='example-pipeline',
@@ -31,8 +40,31 @@ def print_address(name: str):
 def example_pipeline():
     # This is a placeholder for a pipeline step.
     # You can add your own components here.
-    hello_world(name = "Sunjoo")
-    print_address(name = "resdfsdf")
+    a = hello_world(name = "Sunjoo")
+    print_address(name = "resdfsdf", input_message=a.output)
+
+@dsl.component
+def square(x: float) -> float:
+    return x ** 2
+
+@dsl.component
+def add(x: float, y: float) -> float:
+    return x + y
+
+@dsl.component
+def square_root(x: float) -> float:
+    return x ** .5
+
+@dsl.pipeline
+def square_and_sum(a: float, b: float) -> float:
+    a_sq_task = square(x=a)
+    b_sq_task = square(x=b)
+    return add(x=a_sq_task.output, y=b_sq_task.output).output
+
+@dsl.pipeline
+def pythagorean(a: float = 1.2, b: float = 1.2) -> float:
+    sq_and_sum_task = square_and_sum(a=a, b=b)
+    return square_root(x=sq_and_sum_task.output).output
 
 def get_kubeflow_session_cookie(target_host, target_username, target_password):
     session = requests.Session()
@@ -54,45 +86,43 @@ def get_kubeflow_session_cookie(target_host, target_username, target_password):
 
 if __name__ == '__main__':
     kfp.compiler.Compiler().compile(pipeline_func=example_pipeline, package_path='example_pipeline.yaml')
+    #kfp.compiler.Compiler().compile(pipeline_func=pythagorean, package_path='example_pipeline.yaml')
     print("Pipeline compiled successfully and saved to 'example_pipeline.yaml'.")
     target_host = "https://kubeflow.sunjoo.org"
     target_username = "user@example.com"
     target_password = "12341234"
     target_namespace = "kubeflow-user-example-com"
-    pipeline_id = "a6915e0d-47b8-47f8-9a69-d29d09efd9fa"
+    pipeline_name = "example_pipeline_8"
+    pipeline_id = "c35d9aa1-1a94-4b00-8b38-b8e1b8dbd2f9"
+    experiment_name = "experiment_1"
+    experiment_id= "6862b4f0-00cb-46df-a29d-72b596451b5b"
     my_cookie =get_kubeflow_session_cookie(target_host=target_host, target_username=target_username,
                                 target_password=target_password)
 
-    print(my_cookie)
     client = kfp.Client(
         host=f"{target_host}/pipeline",
         namespace=target_namespace,
         cookies=f"authservice_session={my_cookie}",
     )
-    r = client.get_pipeline(pipeline_id)
-    print(r)
-    #r = client.upload_pipeline(
-    #    pipeline_package_path='example_pipeline.yaml',
-    #    pipeline_name='example_pipeline_private4',
-    #    namespace='kubeflow-user-example-com'
-    #)
-    #id = client.get_pipeline_id(name = "example_pipeline_private3")
-    #print(id)
+
+    print("Upload pipeline to the existing pipeline (upload pipeline version )")
     r  = client.upload_pipeline_version(
         pipeline_package_path='example_pipeline.yaml',
-        #pipeline_name='example_pipeline_private4',
+        #pipeline_name=pipeline_name,
         pipeline_version_name=f"pipeline at {datetime.now()}",
         pipeline_id = pipeline_id
     )
-    #client.create_run_from_pipeline_package(
-    #    pipeline_file ='example_pipeline.yaml',
-    #    #pipeline_name='example_pipeline_private4',
-    #    experiment_id = "6862b4f0-00cb-46df-a29d-72b596451b5b"
-    #)
+
     client.run_pipeline(
-        experiment_id="6862b4f0-00cb-46df-a29d-72b596451b5b",
+        experiment_id=experiment_id,
         pipeline_id=r.pipeline_id,
         version_id=r.pipeline_version_id,
         job_name=f"job {datetime.now()}"
 
     )
+
+    #client.create_run_from_pipeline_package(
+    #    pipeline_file ='example_pipeline.yaml',
+    #    #pipeline_name='example_pipeline_private4',
+    #    experiment_id = "6862b4f0-00cb-46df-a29d-72b596451b5b"
+    #)
