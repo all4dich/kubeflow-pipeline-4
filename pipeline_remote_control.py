@@ -57,9 +57,28 @@ def check_by_session_call(target_host, target_username, target_password, target_
     )
     r = client.list_pipelines()
     print(r)
+    client.delete_pipeline(pipeline_id="55b688d8-848a-4272-98f0-5ab0bc97f926")
+
+def check_pipeline_info(target_host, target_username, target_password, target_namespace):
+    my_cookie = get_kubeflow_session_cookie(target_host=target_host, target_username=target_username,
+                                        target_password=target_password)
+    client = kfp.Client(
+        host=f"{target_host}/pipeline",
+        namespace=target_namespace,
+        cookies=f"authservice_session={my_cookie}",
+    )
+    #pipeline_name = "example_pipeline_private4"
+    #r = client.get_pipeline("1f1ef00b-82fb-45e2-814d-09c612849bdd")
+    #print(r)
+    pipelines = client.list_pipelines()
+    print(pipelines)
+    pipeline_info = client.get_pipeline(pipeline_id="60051ac0-17ef-418e-9e0e-c6bd07849933")
+    print(pipeline_info)
+    print(target_namespace)
 
 if __name__ == '__main__':
     #check_by_existing_token()
     #check_by_session_call(HOST, USERNAME, PASSWORD, "space-yjwon")
-    check_by_session_call("https://kubeflow.sunjoo.org", "user@example.com", "12341234", "kubeflow-user-example-com")
-    check_by_session_call(HOST, USERNAME, PASSWORD, "space-yjwon")
+    #check_by_session_call("https://kubeflow.sunjoo.org", "user@example.com", "12341234", "kubeflow-user-example-com")
+    #check_by_session_call(HOST, USERNAME, PASSWORD, "space-yjwon")
+    check_pipeline_info("https://kubeflow.sunjoo.org", "user@example.com", "12341234", "kubeflow-user-example-com")
