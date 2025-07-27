@@ -99,12 +99,14 @@ def get_kubeflow_session_cookie(target_host, target_username, target_password):
 def check_request(host: str, username: str, password: str, auth_suffix: str = "/oauth2/start"):
     session = requests.Session()
     auth_url = f"{host}{auth_suffix}"
-    print(f"Auth start point: {auth_url}")
     session_response = session.get(auth_url)
-    print(f"Session Start Status: {session_response.status_code}")
-    print(session_response.url)
-    auth_response = session.post(session_response.url, data={"login": username, "password": password}, verify=False)
-    print(auth_response.status_code)
+    cookie_value_1 = session.cookies.get('oidc_state_csrf')
+    auth_request_url = f"{host}/dex/auth/ldap?client_id=kubeflow-oidc-authservice&redirect_uri=%2Fauthservice%2Foidc%2Fcallback&response_type=code&scope=openid+profile+email+groups&state={cookie_value_1}"
+    auth_response = session.get(auth_request_url, cookies={'oidc_state_csrf': cookie_value_1}, verify=False)
+    login_request_url  = auth_response.url
+    login_response = session.post(login_request_url, data={"login": username, "password": password}, verify=False, cookies={"oidc_state_csrf": cookie_value_1})
+    login_response.raise_for_status()
+    print(session.cookies)
     cookie_name = "oauth2_proxy_kubeflow"
     if auth_suffix == "":
         cookie_name = "authservice_session"
@@ -112,13 +114,15 @@ def check_request(host: str, username: str, password: str, auth_suffix: str = "/
     return f"{cookie_name}={cookie_value}"
 
 if __name__ == '__main__':
-    HOST = "http://35.185.198.208:8090"
-    #HOST = "https://kubeflow.sunjoo.org"
-    USERNAME = "user@example.com"
-    PASSWORD = "12341234"
-    cookie_value = check_request(HOST, USERNAME, PASSWORD)
+    #HOST = "http://35.185.198.208:8090"
+    HOST = "https://kubeflow.sunjoo.org"
+    #USERNAME = "user@example.com"
+    #PASSWORD = "12341234"
+    USERNAME = "sunjoo.park"
+    PASSWORD = "Postech2001!"
+    cookie_value = check_request(HOST, USERNAME, PASSWORD, auth_suffix="")
     #cookie_value = check_request(HOST, USERNAME, PASSWORD, "")
-    # client = kfp.Client(host=HOST, existing_token="eyJhbGciOiJSUzI1NiIsImtpZCI6InhnMnItc2dJelFNbWlPcW4zRml2eUwyNjZSV3l0MU9oRXZoQVJudXhhM1EifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzUzNTQ2NzU3LCJpYXQiOjE3NTM1NDMxNTcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlZmxvdy11c2VyLWV4YW1wbGUtY29tIiwic2VydmljZWFjY291bnQiOnsibmFtZSI6ImRlZmF1bHQiLCJ1aWQiOiJlM2ZhZDA0OS02ZGI3LTQzYjAtOTk2NC03ZTE4MTdmMTg5ZWIifX0sIm5iZiI6MTc1MzU0MzE1Nywic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmVmbG93LXVzZXItZXhhbXBsZS1jb206ZGVmYXVsdCJ9.KRbyCxTAPdUW1FEqw1TVnbK0esO_K_s73MTPziVB-EHp6HOjfyttiZFJuZ_2Mw3NlxCays2f6yCEh0ZSLkOD3nm1DIfMhyk4BzWE0dd91mTpO-uqtgipI6PtByw8S6balUkKAyzZsEKF7mkQPeE8a8lgsOw-Krg7ihH-SVsLzR1QE3XGeDlK4ushpetkubpwEOL1yhhEQwBsBnuVrAFiChLXLyV447zjd-dJtoYWUegsfV4jaZX4a6KRR5esRuLUqYOJ75KjOhhhTXudg7cvQOLvl2fHhP5bje58nKInI6ukyWyTdXgVZwd7fRjfleY19Dln70MOesARtkU_xJaZlg")
+    #client = kfp.Client(host=HOST, existing_token="eyJhbGciOiJSUzI1NiIsImtpZCI6InhnMnItc2dJelFNbWlPcW4zRml2eUwyNjZSV3l0MU9oRXZoQVJudXhhM1EifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzUzNTQ2NzU3LCJpYXQiOjE3NTM1NDMxNTcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlZmxvdy11c2VyLWV4YW1wbGUtY29tIiwic2VydmljZWFjY291bnQiOnsibmFtZSI6ImRlZmF1bHQiLCJ1aWQiOiJlM2ZhZDA0OS02ZGI3LTQzYjAtOTk2NC03ZTE4MTdmMTg5ZWIifX0sIm5iZiI6MTc1MzU0MzE1Nywic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmVmbG93LXVzZXItZXhhbXBsZS1jb206ZGVmYXVsdCJ9.KRbyCxTAPdUW1FEqw1TVnbK0esO_K_s73MTPziVB-EHp6HOjfyttiZFJuZ_2Mw3NlxCays2f6yCEh0ZSLkOD3nm1DIfMhyk4BzWE0dd91mTpO-uqtgipI6PtByw8S6balUkKAyzZsEKF7mkQPeE8a8lgsOw-Krg7ihH-SVsLzR1QE3XGeDlK4ushpetkubpwEOL1yhhEQwBsBnuVrAFiChLXLyV447zjd-dJtoYWUegsfV4jaZX4a6KRR5esRuLUqYOJ75KjOhhhTXudg7cvQOLvl2fHhP5bje58nKInI6ukyWyTdXgVZwd7fRjfleY19Dln70MOesARtkU_xJaZlg")
     client = kfp.Client(
         host=HOST + "/pipeline",
         cookies=cookie_value
