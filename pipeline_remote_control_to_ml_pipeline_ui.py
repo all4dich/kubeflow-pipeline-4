@@ -105,7 +105,7 @@ def extract_hrefs_from_string(html_string):
     return [link['href'] for link in links]
 
 
-def check_request(host: str, username: str, password: str, auth_suffix: str = "/oauth2/start", auth_type="ldap"):
+def kubeflow_authenticate_and_get_cookie(host: str, username: str, password: str, auth_suffix: str = "/oauth2/start", auth_type="ldap"):
     session = requests.Session()
     auth_url = f"{host}{auth_suffix}"
     session_response = session.get(auth_url)
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     USERNAME = os.environ.get("KUBEFLOW_USERNAME", "user@example.com")
     PASSWORD = os.environ.get("KUBEFLOW_PASSWORD", "12341234")
     AUTH_SOURCE = os.environ.get("KUBEFLOW_AUTH_SOURCE", "local")
-    cookie_value = check_request(HOST, USERNAME, PASSWORD, auth_type=AUTH_SOURCE)
+    cookie_value = kubeflow_authenticate_and_get_cookie(HOST, USERNAME, PASSWORD, auth_type=AUTH_SOURCE)
     client = kfp.Client(
         host=HOST + "/pipeline",
         cookies=cookie_value
