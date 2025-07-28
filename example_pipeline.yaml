@@ -1,37 +1,284 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Workflow
-metadata:
-  generateName: example-pipeline-
-  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.22, pipelines.kubeflow.org/pipeline_compilation_time: '2025-07-21T13:31:51.304085',
-    pipelines.kubeflow.org/pipeline_spec: '{"description": "An example pipeline that
-      checks CUDA availability.", "name": "example-pipeline"}'}
-  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.22}
-spec:
-  entrypoint: example-pipeline
-  templates:
-  - name: example-pipeline
-    dag:
-      tasks:
-      - {name: shell-operator, template: shell-operator}
-      - name: ubuntu-operator
-        template: ubuntu-operator
-        dependencies: [shell-operator]
-  - name: shell-operator
-    container:
-      command: [bash, -c, echo 'Hello from the shell operator!']
-      image: all4dich/pytorch-cuda-example:dev
-    metadata:
-      labels:
-        pipelines.kubeflow.org/kfp_sdk_version: 1.8.22
-        pipelines.kubeflow.org/pipeline-sdk-type: kfp
-        pipelines.kubeflow.org/enable_caching: "true"
-  - name: ubuntu-operator
-    container: {image: 'all4dich/pytorch-cuda-example:dev'}
-    metadata:
-      labels:
-        pipelines.kubeflow.org/kfp_sdk_version: 1.8.22
-        pipelines.kubeflow.org/pipeline-sdk-type: kfp
-        pipelines.kubeflow.org/enable_caching: "true"
-  arguments:
-    parameters: []
-  serviceAccountName: pipeline-runner
+# PIPELINE DEFINITION
+# Name: example-pipeline
+# Description: An example pipeline that checks CUDA availability.
+components:
+  comp-ending-message:
+    executorLabel: exec-ending-message
+  comp-ending-message-2:
+    executorLabel: exec-ending-message-2
+  comp-hello-world:
+    executorLabel: exec-hello-world
+    inputDefinitions:
+      parameters:
+        name:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-print-address:
+    executorLabel: exec-print-address
+    inputDefinitions:
+      parameters:
+        input_message:
+          parameterType: STRING
+        name:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-print-ubuntu-info:
+    executorLabel: exec-print-ubuntu-info
+  comp-print-ubuntu-info-2:
+    executorLabel: exec-print-ubuntu-info-2
+deploymentSpec:
+  executors:
+    exec-ending-message:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - ending_message
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.5.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef ending_message():\n    print(\"Done.....\")\n\n"
+        image: python:3.7
+    exec-ending-message-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - ending_message
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.5.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef ending_message():\n    print(\"Done.....\")\n\n"
+        image: python:3.7
+    exec-hello-world:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - hello_world
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.5.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef hello_world(name: str) -> str:\n    import os\n    message =\
+          \ (\"Hello, \", name)\n    print(message)\n    os.system(\"uname -a\")\n\
+          \    return \"message\"\n\n"
+        image: python:3.7
+    exec-print-address:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - print_address
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.5.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef print_address(name: str, input_message: str) -> str:\n    import\
+          \ os\n    print(\"320 , \", name)\n    os.system(\"uname -a\")\n    print(input_message)\n\
+          \    return \"Done\"\n\n"
+        image: python:3.7
+    exec-print-ubuntu-info:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - print_ubuntu_info
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.5.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef print_ubuntu_info():\n    import os\n    os.system(\"which vim\"\
+          )\n    os.system(\"which git\")\n    os.system(\"uname -a\")\n\n"
+        image: python:3.13-slim
+    exec-print-ubuntu-info-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - print_ubuntu_info
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.5.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef print_ubuntu_info():\n    import os\n    os.system(\"which vim\"\
+          )\n    os.system(\"which git\")\n    os.system(\"uname -a\")\n\n"
+        image: python:3.13-slim
+pipelineInfo:
+  description: An example pipeline that checks CUDA availability.
+  name: example-pipeline
+root:
+  dag:
+    tasks:
+      ending-message:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-ending-message
+        dependentTasks:
+        - print-address
+        taskInfo:
+          name: ending-message
+      ending-message-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-ending-message-2
+        dependentTasks:
+        - hello-world
+        taskInfo:
+          name: ending-message-2
+      hello-world:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-hello-world
+        inputs:
+          parameters:
+            name:
+              runtimeValue:
+                constant: Sunjoo
+        taskInfo:
+          name: hello-world
+      print-address:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-print-address
+        dependentTasks:
+        - hello-world
+        inputs:
+          parameters:
+            input_message:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: hello-world
+            name:
+              runtimeValue:
+                constant: resdfsdf
+        taskInfo:
+          name: print-address
+      print-ubuntu-info:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-print-ubuntu-info
+        dependentTasks:
+        - ending-message
+        taskInfo:
+          name: print-ubuntu-info
+      print-ubuntu-info-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-print-ubuntu-info-2
+        dependentTasks:
+        - ending-message-2
+        taskInfo:
+          name: print-ubuntu-info-2
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.5.0

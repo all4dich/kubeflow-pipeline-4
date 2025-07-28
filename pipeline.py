@@ -114,13 +114,15 @@ if __name__ == '__main__':
     pipeline_id = "c35d9aa1-1a94-4b00-8b38-b8e1b8dbd2f9"
     experiment_name = "experiment_1"
     experiment_id= "6862b4f0-00cb-46df-a29d-72b596451b5b"
-    my_cookie =get_kubeflow_session_cookie(target_host=target_host, target_username=target_username,
-                                target_password=target_password)
+    from pipeline_remote_control_to_ml_pipeline_ui import kubeflow_authenticate_and_get_cookie
+
+    # IF you  create connector configuration for LDAP on Dex configuration, set auth_type='ldap'
+    my_cookie = kubeflow_authenticate_and_get_cookie(host=target_host, username=target_username, password=target_password, auth_type="local")
 
     client = kfp.Client(
         host=f"{target_host}/pipeline",
         namespace=target_namespace,
-        cookies=f"authservice_session={my_cookie}",
+        cookies=f"{my_cookie}",
     )
 
     print("Upload pipeline to the existing pipeline (upload pipeline version )")
